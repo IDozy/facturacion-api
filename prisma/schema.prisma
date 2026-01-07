@@ -1,14 +1,121 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Empresa {
+  id_empresa        Int      @id @default(autoincrement())
+  ruc               String   @unique
+  razon_social      String
+  nombre_comercial  String?
+  direccion         String?
+  ubigeo            String?
+  email             String?
+  telefono          String?
+  sol_usuario       String?
+  sol_clave         String?
+  cert_alias        String?
+
+  logo_url          String?
+
+  creado_en         DateTime @default(now())
+  actualizado_en    DateTime?
+  activo            Boolean  @default(true)
+
+  usuarios          Usuario[]
+  almacenes         Almacen[]
+}
+
+model Modulo {
+  id_modulo   Int     @id @default(autoincrement())
+  codigo      String  @unique
+  nombre      String
+  orden       Int     @default(0)
+  icono       String?
+  ruta_base   String?
+  activo      Boolean @default(true)
+
+  permisos    Permiso[]
+}
+
+model Permiso {
+  id_permiso  Int     @id @default(autoincrement())
+  codigo      String  @unique
+  descripcion String?
+  id_modulo   Int?
+
+  modulo      Modulo? @relation(fields: [id_modulo], references: [id_modulo])
+  roles       RolPermiso[]
+}
+
+model Rol {
+  id_rol       Int     @id @default(autoincrement())
+  nombre       String  @unique
+  descripcion  String?
+  activo       Boolean @default(true)
+
+  permisos     RolPermiso[]
+  usuarios     UsuarioRol[]
+}
+
+model RolPermiso {
+  id_rol     Int
+  id_permiso Int
+
+  rol        Rol     @relation(fields: [id_rol], references: [id_rol], onDelete: Cascade)
+  permiso    Permiso @relation(fields: [id_permiso], references: [id_permiso], onDelete: Cascade)
+
+  @@id([id_rol, id_permiso])
+}
+
+model Usuario {
+  id_usuario      Int      @id @default(autoincrement())
+  id_empresa      Int
+  username        String   @unique
+  password_hash   String
+  nombre          String?
+  email           String?
+  activo          Boolean  @default(true)
+
+  creado_en       DateTime @default(now())
+  actualizado_en  DateTime?
+  ultimo_login    DateTime?
+
+  eliminado_en    DateTime?
+  eliminado_por   Int?
+
+  empresa         Empresa  @relation(fields: [id_empresa], references: [id_empresa])
+  roles           UsuarioRol[]
+
+  creado_por      Int?
+}
+
+model UsuarioRol {
+  id_usuario Int
+  id_rol     Int
+
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+  rol        Rol     @relation(fields: [id_rol], references: [id_rol], onDelete: Cascade)
+
+  @@id([id_usuario, id_rol])
+}
+
+model Almacen {
+  id_almacen   Int      @id @default(autoincrement())
+  id_empresa   Int
+  nombre       String
+  direccion    String?
+
+  creado_en    DateTime @default(now())
+  activo       Boolean  @default(true)
+
+  eliminado_en DateTime?
+  eliminado_por Int?
+
+  empresa      Empresa  @relation(fields: [id_empresa], references: [id_empresa])
+
+  @@unique([id_empresa, nombre])
 }
